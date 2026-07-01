@@ -1,8 +1,11 @@
 package com.rollcall.controller;
 
+import com.rollcall.dto.ChangePasswordRequest;
+import com.rollcall.dto.RegisterRequest;
 import com.rollcall.entity.User;
 import com.rollcall.mapper.UserMapper;
 import com.rollcall.util.Result;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,14 +20,15 @@ public class UserController {
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @PostMapping("/register")
-    public Result register(@RequestParam String username, @RequestParam String password, @RequestParam(required = false) String role) {
+    public Result register(@Valid @RequestBody RegisterRequest req) {
         try {
+            String username = req.getUsername();
             User exist = userMapper.findByUsername(username);
             if (exist != null) return Result.error("用户已存在");
             User u = new User();
             u.setUsername(username);
-            u.setPassword(passwordEncoder.encode(password));
-            u.setRole(role == null ? "ROLE_STUDENT" : role);
+            u.setPassword(passwordEncoder.encode(req.getPassword()));
+            u.setRole(req.getRole() == null ? "ROLE_STUDENT" : req.getRole());
             userMapper.insertUser(u);
             return Result.success("注册成功");
         } catch (Exception e) {
@@ -33,13 +37,13 @@ public class UserController {
     }
 
     @PostMapping("/changePassword")
-    public Result changePassword(@RequestParam String username, @RequestParam String oldPassword, @RequestParam String newPassword) {
+    public Result changePassword(@Valid @RequestBody ChangePasswordRequest req) {
         try {
-            User u = userMapper.findByUsername(username);
+            User u = userMapper.findByUsername(req.getUsername());
             if (u == null) return Result.error("用户不存在");
-            if (!passwordEncoder.matches(oldPassword, u.getPassword())) return Result.error("旧密码错误");
-            String enc = passwordEncoder.encode(newPassword);
-            userMapper.updatePassword(username, enc);
+            if (!passwordEncoder.matches(req.getOldPassword(), u.getPassword())) return Result.error("旧密码错误");
+            String enc = passwordEncoder.encode(req.getNewPassword());
+            userMapper.updatePassword(req.getUsername(), enc);
             return Result.success("密码修改成功");
         } catch (Exception e) {
             return Result.error("修改密码异常:" + e.getMessage());
