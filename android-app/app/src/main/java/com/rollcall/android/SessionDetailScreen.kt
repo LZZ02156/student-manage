@@ -4,6 +4,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.rollcall.android.model.AttendanceRecord
 import com.rollcall.android.model.Session
 import com.rollcall.android.repository.SessionRepository
@@ -23,55 +25,13 @@ import com.rollcall.android.viewmodel.SessionViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SessionListScreen(token: String, sessionsVm: SessionViewModel) {
-    val state by sessionsVm.state.collectAsState()
-    val lastStatus by sessionsVm.lastCheckinStatus.collectAsState()
-    val context = LocalContext.current
-    var selectedSessionId by remember { mutableStateOf<Long?>(null) }
-
-    LaunchedEffect(Unit) { sessionsVm.loadSessions() }
-
-    when (state) {
-        is com.rollcall.android.viewmodel.SessionsState.Loading -> CircularProgressIndicator()
-        is com.rollcall.android.viewmodel.SessionsState.Loaded -> {
-            val list = (state as com.rollcall.android.viewmodel.SessionsState.Loaded).sessions
-            Column {
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(list) { s ->
-                        SessionRow(s, onClick = { selectedSessionId = s.id })
-                    }
-                }
-                if (lastStatus != null) {
-                    Text("Last checkin: $lastStatus", modifier = Modifier.padding(8.dp))
-                }
-            }
-
-            if (selectedSessionId != null) {
-                SessionDetailScreen(sessionId = selectedSessionId!!, onClose = { selectedSessionId = null }, sessionsVm = sessionsVm)
-            }
-        }
-        is com.rollcall.android.viewmodel.SessionsState.Error -> Text("Error: ${(state as com.rollcall.android.viewmodel.SessionsState.Error).message}")
-        else -> Text("No sessions")
-    }
-}
-
-@Composable
-fun SessionRow(s: Session, onClick: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            Text(s.title ?: "(no title)")
-            Text("by ${s.creator}")
-        }
-    }
-}
-
-@Composable
 fun SessionDetailScreen(sessionId: Long, onClose: () -> Unit, sessionsVm: SessionViewModel) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val sessionState = remember { mutableStateOf<Session?>(null) }
     val attendance by sessionsVm.attendance.collectAsState()
     var showCheckinDialog by remember { mutableStateOf(false) }
+    var uploadProgress by remember { mutableStateOf(0f) }
 
     // photo picker
     val pickLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -79,15 +39,19 @@ fun SessionDetailScreen(sessionId: Long, onClose: () -> Unit, sessionsVm: Sessio
             // upload and then checkin with proofUrl
             scope.launch {
                 val repo = SessionRepository(context)
-                val uploadResp = repo.uploadFile(uri)
+                val uploadResp = repo.uploadFile(uri) { uploaded, total ->
+                    uploadProgress = uploaded.toFloat() / total.toFloat()
+                }
                 if (uploadResp.isSuccessful) {
-                    val url = uploadResp.body()
+                    val body = uploadResp.body()
+                    val url = body?.url
                     sessionsVm.checkin(sessionId, null, null, url)
                     Toast.makeText(context, "Uploaded and checkin requested", Toast.LENGTH_SHORT).show()
                     sessionsVm.loadAttendance(sessionId)
                 } else {
                     Toast.makeText(context, "Upload failed", Toast.LENGTH_SHORT).show()
                 }
+                uploadProgress = 0f
             }
         }
     }
@@ -115,11 +79,19 @@ fun SessionDetailScreen(sessionId: Long, onClose: () -> Unit, sessionsVm: Sessio
             })
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { pickLauncher.launch("image/*") }) { Text("Choose Photo & Checkin") }
+            if (uploadProgress > 0f) {
+                LinearProgressIndicator(progress = uploadProgress, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+            }
             Spacer(modifier = Modifier.height(12.dp))
             Text("Attendance:")
             LazyColumn(modifier = Modifier.height(200.dp)) {
                 items(attendance) { a: AttendanceRecord ->
-                    Text("${a.username} - ${a.status} - ${a.checkinTime}")
+                    Column(modifier = Modifier.padding(4.dp)) {
+                        Text("${a.username} - ${a.status} - ${a.checkinTime}")
+                        if (!a.proofUrl.isNullOrEmpty()) {
+                            AsyncImage(model = "http://10.0.2.2:8080" + a.proofUrl, contentDescription = "proof", modifier = Modifier.height(80.dp).width(80.dp))
+                        }
+                    }
                 }
             }
         }

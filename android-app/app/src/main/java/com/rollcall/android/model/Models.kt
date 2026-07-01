@@ -32,3 +32,8 @@ data class AttendanceRecord(
     val proofUrl: String?,
     val note: String?
 )
+
+data class UploadResponse(
+    val url: String,
+    val thumbnailUrl: String?
+)

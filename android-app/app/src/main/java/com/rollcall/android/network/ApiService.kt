@@ -4,6 +4,7 @@ import com.rollcall.android.model.AttendanceRecord
 import com.rollcall.android.model.CheckinRequest
 import com.rollcall.android.model.LoginResponse
 import com.rollcall.android.model.Session
+import com.rollcall.android.model.UploadResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -27,5 +28,5 @@ interface ApiService {
 
     @Multipart
     @POST("/uploads")
-    suspend fun upload(@Part file: MultipartBody.Part): Response<String>
+    suspend fun upload(@Part file: MultipartBody.Part): Response<UploadResponse>
 }
