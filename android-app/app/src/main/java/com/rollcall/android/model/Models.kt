@@ -4,8 +4,8 @@ import java.time.LocalDateTime
 
 data class Session(
     val id: Long,
-    val title: String,
-    val creator: String,
+    val title: String?,
+    val creator: String?,
     val startTime: String?,
     val endTime: String?
 )
@@ -19,4 +19,16 @@ data class CheckinRequest(
 
 data class LoginResponse(
     val token: String
+)
+
+data class AttendanceRecord(
+    val id: Long,
+    val sessionId: Long,
+    val username: String,
+    val status: String?,
+    val checkinTime: String?,
+    val checkinLat: Double?,
+    val checkinLng: Double?,
+    val proofUrl: String?,
+    val note: String?
 )
