@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
+        android:name="com.rollcall.android.RollcallApp"
         android:allowBackup="true"
         android:label="RollCall"
         android:theme="@style/Theme.Rollcall">
