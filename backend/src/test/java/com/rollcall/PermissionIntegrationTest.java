@@ -8,6 +8,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,8 +58,16 @@ public class PermissionIntegrationTest {
     @Test
     @WithMockUser(username = "teacher", roles = {"TEACHER"})
     public void teacherCanDeleteUser() throws Exception {
-        mockMvc.perform(post("/auth/deleteUser")
+        mockMvc.perform(delete("/auth/deleteUser")
                 .param("username", "someuser"))
-                .andExpect(status().isMethodNotAllowed());
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "student", roles = {"STUDENT"})
+    public void studentCannotDeleteUser() throws Exception {
+        mockMvc.perform(delete("/auth/deleteUser")
+                .param("username", "someuser"))
+                .andExpect(status().isForbidden());
     }
 }
