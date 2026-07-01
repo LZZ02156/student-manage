@@ -22,6 +22,9 @@ class SessionViewModel: ViewModel() {
     private val _state = MutableStateFlow<SessionsState>(SessionsState.Idle)
     val state: StateFlow<SessionsState> = _state
 
+    private val _lastCheckinStatus = MutableStateFlow<String?>(null)
+    val lastCheckinStatus: StateFlow<String?> = _lastCheckinStatus
+
     fun loadSessions() {
         _state.value = SessionsState.Loading
         viewModelScope.launch {
@@ -48,8 +51,14 @@ class SessionViewModel: ViewModel() {
                 val bearer = if (token != null) "Bearer $token" else ""
                 val req = CheckinRequest(lat, lng, null, null)
                 val resp = repo.checkin(bearer, sessionId, req)
-                // ignore response for now; caller can observe result via callbacks
-            } catch (_: Exception) {
+                if (resp.isSuccessful) {
+                    val body = resp.body()
+                    _lastCheckinStatus.value = body ?: "OK"
+                } else {
+                    _lastCheckinStatus.value = "failed: ${resp.code()}"
+                }
+            } catch (e: Exception) {
+                _lastCheckinStatus.value = e.message ?: "error"
             }
         }
     }
