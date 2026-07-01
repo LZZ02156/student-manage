@@ -25,10 +25,19 @@ public class RollCallServiceImpl implements RollCallService {
     @Value("${file.upload.path}")
     private String uploadPath;
 
+    private static final long MAX_IMAGE_SIZE = 5L * 1024 * 1024; // 5MB
+
     @Override
     public boolean uploadRollCallRecord(String studentId, String studentName, String className, String courseName, String location, MultipartFile faceImage) throws Exception {
         // validate
         if (faceImage == null || faceImage.isEmpty()) return false;
+        String contentType = faceImage.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("只允许上传图片文件");
+        }
+        if (faceImage.getSize() > MAX_IMAGE_SIZE) {
+            throw new IllegalArgumentException("图片大小不能超过5MB");
+        }
         String fileName = FileUtil.generateFileName(faceImage.getOriginalFilename());
         FileUtil.saveFile(faceImage, uploadPath, fileName);
         String imageUrl = "/uploads/" + fileName; // nginx mapping
