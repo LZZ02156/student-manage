@@ -4,6 +4,7 @@ import com.rollcall.entity.Student;
 import com.rollcall.service.RollCallService;
 import com.rollcall.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,7 +17,9 @@ public class RollCallController {
     @Autowired
     private RollCallService rollCallService;
 
+    // Only teachers can get the student list for a class/course
     @GetMapping("/getStudentList")
+    @PreAuthorize("hasRole('TEACHER')")
     public Result getStudentList(@RequestParam String className, @RequestParam String courseName) {
         try {
             List<Student> studentList = rollCallService.getStudentList(className, courseName);
@@ -26,7 +29,9 @@ public class RollCallController {
         }
     }
 
+    // Students (and teachers) can upload roll call records
     @PostMapping("/uploadRecord")
+    @PreAuthorize("isAuthenticated()")
     public Result uploadRecord(@RequestParam String studentId,
                                @RequestParam String studentName,
                                @RequestParam String className,
@@ -42,7 +47,9 @@ public class RollCallController {
         }
     }
 
+    // Only teachers can get roll call results
     @GetMapping("/getRollCallResult")
+    @PreAuthorize("hasRole('TEACHER')")
     public Result getRollCallResult(@RequestParam String className, @RequestParam String courseName) {
         try {
             Map<String, Integer> resultMap = rollCallService.getRollCallResult(className, courseName);
@@ -52,7 +59,9 @@ public class RollCallController {
         }
     }
 
+    // Only teachers can do random check
     @GetMapping("/randomCheck")
+    @PreAuthorize("hasRole('TEACHER')")
     public Result randomCheck(@RequestParam String className, @RequestParam String courseName) {
         try {
             Student student = rollCallService.randomSelectStudent(className, courseName);
