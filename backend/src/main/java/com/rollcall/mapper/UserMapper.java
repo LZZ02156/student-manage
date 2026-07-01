@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Delete;
 
 @Mapper
 public interface UserMapper {
@@ -17,4 +18,10 @@ public interface UserMapper {
 
     @Update("UPDATE users SET password = #{password} WHERE username = #{username}")
     int updatePassword(@Param("username") String username, @Param("password") String password);
+
+    @Update("UPDATE users SET role = #{role} WHERE username = #{username}")
+    int updateRole(@Param("username") String username, @Param("role") String role);
+
+    @Delete("DELETE FROM users WHERE username = #{username}")
+    int deleteUser(@Param("username") String username);
 }

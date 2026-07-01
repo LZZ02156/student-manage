@@ -4,11 +4,9 @@ import com.rollcall.entity.User;
 import com.rollcall.mapper.UserMapper;
 import com.rollcall.util.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -45,6 +43,46 @@ public class UserController {
             return Result.success("密码修改成功");
         } catch (Exception e) {
             return Result.error("修改密码异常:" + e.getMessage());
+        }
+    }
+
+    // admin/teacher privileged endpoints
+    @PostMapping("/resetPassword")
+    @PreAuthorize("hasRole('TEACHER')")
+    public Result resetPassword(@RequestParam String username, @RequestParam String newPassword) {
+        try {
+            User u = userMapper.findByUsername(username);
+            if (u == null) return Result.error("用户不存在");
+            String enc = passwordEncoder.encode(newPassword);
+            userMapper.updatePassword(username, enc);
+            return Result.success("密码已重置");
+        } catch (Exception e) {
+            return Result.error("重置密码异常:" + e.getMessage());
+        }
+    }
+
+    @PostMapping("/changeRole")
+    @PreAuthorize("hasRole('TEACHER')")
+    public Result changeRole(@RequestParam String username, @RequestParam String role) {
+        try {
+            User u = userMapper.findByUsername(username);
+            if (u == null) return Result.error("用户不存在");
+            userMapper.updateRole(username, role);
+            return Result.success("角色修改成功");
+        } catch (Exception e) {
+            return Result.error("修改角色异常:" + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/deleteUser")
+    @PreAuthorize("hasRole('TEACHER')")
+    public Result deleteUser(@RequestParam String username) {
+        try {
+            int c = userMapper.deleteUser(username);
+            if (c > 0) return Result.success("用户已删除");
+            else return Result.error("用户不存在或删除失败");
+        } catch (Exception e) {
+            return Result.error("删除用户异常:" + e.getMessage());
         }
     }
 }
