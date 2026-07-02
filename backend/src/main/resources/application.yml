@@ -1,0 +1,19 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/rollcall?useSSL=false&serverTimezone=UTC
+    username: root
+    password: root
+  mvc:
+    static-path-pattern: /uploads/**
+
+file:
+  upload:
+    path: /var/www/rollcall/uploads
+
+mybatis:
+  mapper-locations: classpath*:mappers/*.xml
+
+jwt:
+  secret: very_long_and_random_secret_key_for_dev_change_in_prod

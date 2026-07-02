@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:padding="16dp">
+
+    <EditText android:id="@+id/et_student_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="学号" />
+    <EditText android:id="@+id/et_student_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="姓名" />
+    <EditText android:id="@+id/et_class_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="班级" />
+    <EditText android:id="@+id/et_course_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="课程" />
+
+    <ImageView android:id="@+id/iv_face" android:layout_width="120dp" android:layout_height="120dp" android:src="@mipmap/ic_launcher" />
+    <Button android:id="@+id/btn_take_photo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="拍照" />
+    <Button android:id="@+id/btn_upload" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="上传" />
+
+</LinearLayout>
